@@ -1,0 +1,9 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics]
+"IconSpacing"="-1710"
+"IconVerticalSpacing"="-1125"
+
+;[EN]
+;For some reason in some situations, Windows 10 is installed with a small horizontal spacing between icons on the desktop. 
+;This sets the spacing to how it was from Windows Vista up to Windows 8.1
