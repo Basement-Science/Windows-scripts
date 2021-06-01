@@ -20,7 +20,7 @@ FOR /F "tokens=2* delims=	 " %%A IN ('REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\Mic
 FOR /F "tokens=2* delims=	 " %%A IN ('REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system" /v EnableLUA') do (set EnableLUA=%%B)
 FOR /F "tokens=2* delims=	 " %%A IN ('REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\system" /v FilterAdministratorToken') do (set FilterAdministratorToken=%%B)
 
-ping localhost -n 3 >nul
+timeout 3 >nul
 cls
 echo The following are Important and are currently set as follows: !NL!!NL!PromptOnSecureDesktop: %PromptOnSecureDesktop% !NL!EnableLUA: %EnableLUA% !NL!FilterAdministratorToken: %FilterAdministratorToken% !NL!
 
@@ -33,7 +33,7 @@ if not {%UAC_state%}=={} goto :UAC_set
 goto :Error
 
 :UAC_set
-ping localhost -n 2 >nul
+timeout 2 >nul
 echo !NL!/////////////////////////////////////////////////////////////////////////////////////
 if {%UAC_state%}=={0} (
 	echo UserAccountControl is currently disabled. Enabling...!NL!
