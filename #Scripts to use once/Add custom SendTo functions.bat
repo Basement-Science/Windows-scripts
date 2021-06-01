@@ -1,56 +1,60 @@
 @echo off
 color 0a
-cd %windir%
+:: This script adds 2 entries to the current user's SendTo functionality. 
+:: 1. A script that can add shortcuts into the SendTo-Folder.
+::    This way, you can add any locations to which you frequently need to copy things, for example.
+:: 2. An entry which opens the SendTo-Folder itself in an explorer window, regardless of what files were selected. 
 
 :: get the user's language
 FOR /F "tokens=3" %%a IN ('reg query "HKCU\Control Panel\Desktop" /v PreferredUILanguages ^| find "PreferredUILanguages"') DO set LangCulture=%%a
 set UILanguage=%LangCulture:~0,2%
 echo User Display Language: %UILanguage%, language+Culture: %LangCulture%
-set LinkLocation=%APPDATA%\Microsoft\Windows\SendTo
 
-
+:: Copy the Link Script to SendTo
+set SendToLocation=%APPDATA%\Microsoft\Windows\SendTo
 if {%UILanguage%}=={de} (
-	set LinkName=%LinkLocation%\++Zu SendTo hinzufügen++.lnk
-	set Description=Fügt eine Verknüpfung zu dieser Datei im SendTo-Ordner ein
+	set LinkScriptLocation=%SendToLocation%\++Zu SendTo hinzufgen++.vbs
 ) else (
-	set LinkName=%LinkLocation%\++Add to SendTo++.lnk
-	set Description=Adds a link to this File into the SendTo-Folder
+	set LinkScriptLocation=%SendToLocation%\++Add to SendTo++.vbs
 )
-set TargetPath=%LinkLocation%
+copy /y "Add shortcut into THIS directory.vbs" "%LinkScriptLocation%"
+if not errorlevel 0 echo ERROR: script could not be copied & goto :error
+echo successfully added Link Script
+
+
+:: Add Shortcut to the SendTo folder itself. Using the SendTo menu will COPY files and folders here.
+if {%UILanguage%}=={de} (
+	set LinkName=++Nach SendTo kopieren++
+	set Description=Kopiert Dateien und Ordner in den SendTo-Ordner
+) else (
+	set LinkName=++Copy to SendTo++
+	set Description=Copies Files and Folders into the SendTo-Folder
+)
+set TargetPath=%SendToLocation%
 set Arguments=
 set IconLocation=
-call :AddLink
+call :RunLinkScript
+echo successfully added shortcut to SendTo itself (for copying files to SendTo)
 
+:: Add Script to open SendTo in explorer
 if {%UILanguage%}=={de} (
-	set LinkName=%LinkLocation%\++SendTo-Ordner öffnen++.lnk
-	set Description=Öffnet den SendTo-Ordner in einem Explorer-Fenster
+	set LinkName=++SendTo-Ordner ”ffnen++
+	set Description=”ffnet den SendTo-Ordner in einem Explorer-Fenster
 ) else (
-	set LinkName=%LinkLocation%\++open SendTo-Folder++.lnk
+	set LinkName=++open SendTo-Folder++
 	set Description=opens the SendTo-Folder in an explorer window
 )
 set TargetPath=cmd.exe
-set Arguments=/C start shell:sendto
-set IconLocation=%SystemRoot%\explorer.exe, 13
-call :AddLink
+set Arguments="/C start shell:sendto"
+set IconLocation="%SystemRoot%\explorer.exe, 13"
+call :RunLinkScript
+echo successfully added Script to open SendTo in explorer
 
+:error
 timeout 3
-exit
+goto :end
 
-:AddLink
-:: create a temporary vb script because creating a shortcut is HARD
-set SCRIPT="%TEMP%\%RANDOM%-%RANDOM%-%RANDOM%.vbs"
-
-echo Set oWS = WScript.CreateObject("WScript.Shell") >> %SCRIPT%
-echo sLinkFile = "%LinkName%" >> %SCRIPT%
-echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
-echo oLink.TargetPath = "%TargetPath%" >> %SCRIPT%
-if not {"%Arguments%"}=={""} (echo oLink.Arguments = "%Arguments%" >> %SCRIPT%)
-if not {"%Description%"}=={""} (echo oLink.Description = "%Description%" >> %SCRIPT%)
-if not {"%IconLocation%"}=={""} (echo oLink.IconLocation = "%IconLocation%" >> %SCRIPT%)
-echo oLink.Save >> %SCRIPT%
-
-cscript /nologo %SCRIPT%
-if errorlevel 0 echo succefully added link
-if errorlevel 1 echo link could not be added
-del %SCRIPT%
+:RunLinkScript
+cscript /nologo "%LinkScriptLocation%" "%TargetPath%" "%LinkName%" "%Description%" %Arguments% %IconLocation%
+if not errorlevel 0 echo ERROR: Script did not run correctly & goto :error
 :end
